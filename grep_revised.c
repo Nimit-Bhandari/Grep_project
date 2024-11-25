@@ -4,6 +4,28 @@
 
 #define MAX_LINE_LEN 1024
 
+// ANSI escape codes for coloring text
+#define RESET_COLOR "\033[0m"
+#define HIGHLIGHT_COLOR "\033[1;31m" // Red color
+
+// Function to perform case-insensitive comparison (returns pointer to the match)
+char *case_insensitive_strstr(const char *haystack, const char *needle) {
+    while (*haystack) {
+        const char *h = haystack;
+        const char *n = needle;
+
+        while (*n && (tolower(*h) == tolower(*n))) {
+            h++;
+            n++;
+        }
+
+        if (!*n) return (char *)haystack; // Match found
+
+        haystack++;
+    }
+    return NULL; // No match found
+}
+
 void search_file(FILE *file, const char *pattern, int ignore_case, int invert_match, int show_line_numbers) {
     char line[MAX_LINE_LEN];
     int line_number = 0;
@@ -12,18 +34,11 @@ void search_file(FILE *file, const char *pattern, int ignore_case, int invert_ma
         line_number++;
         char *found = NULL;
 
-        // Perform case-insensitive comparison if required
         if (ignore_case) {
-            char line_lower[MAX_LINE_LEN], pattern_lower[MAX_LINE_LEN];
-            strncpy(line_lower, line, MAX_LINE_LEN);
-            strncpy(pattern_lower, pattern, MAX_LINE_LEN);
-
-            // Convert line and pattern to lowercase
-            for (int i = 0; line_lower[i]; i++) line_lower[i] = tolower(line_lower[i]);
-            for (int i = 0; pattern_lower[i]; i++) pattern_lower[i] = tolower(pattern_lower[i]);
-
-            found = strstr(line_lower, pattern_lower);
+            // Case-insensitive search
+            found = case_insensitive_strstr(line, pattern);
         } else {
+            // Case-sensitive search
             found = strstr(line, pattern);
         }
 
@@ -32,7 +47,26 @@ void search_file(FILE *file, const char *pattern, int ignore_case, int invert_ma
 
         if (is_match) {
             if (show_line_numbers) printf("%d:", line_number);
-            printf("%s", line);
+
+            char *start = line;
+            char *match = found;
+
+            while (match != NULL) {
+                // Print text before the match
+                fwrite(start, 1, match - start, stdout);
+
+                // Highlight the match
+                printf(HIGHLIGHT_COLOR "%.*s" RESET_COLOR, (int)strlen(pattern), match);
+
+                // Move past the match
+                start = match + strlen(pattern);
+
+                // Find next match in case of multiple occurrences
+                match = ignore_case ? case_insensitive_strstr(start, pattern) : strstr(start, pattern);
+            }
+
+            // Print the remaining part of the line
+            printf("%s", start);
         }
     }
 }
