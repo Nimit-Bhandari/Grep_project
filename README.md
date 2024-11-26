@@ -62,7 +62,5 @@ Once the program is compiled, you can use it in the terminal for searching patte
 - **`-i`**: Perform a **case-insensitive** search (e.g., "Pattern" will match "pattern").
 - **No file input**: When no files are provided, input can be piped or typed directly in the terminal.
 
-### Example Output
-
-For a file named `sample.txt` containing:
+# Enjoy using this! 
 
